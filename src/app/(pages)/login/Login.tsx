@@ -95,7 +95,11 @@ export default function Login() {
           queryClient.invalidateQueries({ queryKey: cartQueryKey, refetchType: "all" }),
         ]);
         toast.success("Welcome back!");
-        router.push("/");
+        const requestedDestination = new URLSearchParams(window.location.search).get("callbackUrl");
+        const destination = requestedDestination?.startsWith("/") && !requestedDestination.startsWith("//")
+          ? requestedDestination
+          : "/";
+        router.push(destination);
         router.refresh();
         return;
       }

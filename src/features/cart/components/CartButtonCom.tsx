@@ -3,6 +3,9 @@
 import type { ReactNode } from "react";
 import { LoaderCircle } from "lucide-react";
 import { toast } from "react-toastify";
+import { useQuery } from "@tanstack/react-query";
+import { getSession } from "next-auth/react";
+import { usePathname, useRouter } from "next/navigation";
 import { usePreferences } from "@/components/ui-preferences";
 import { useAddProductToCart } from "../hooks/useCart";
 
@@ -21,8 +24,22 @@ export default function CartButtonCom({
 }) {
   const mutation = useAddProductToCart();
   const { t } = usePreferences();
+  const router = useRouter();
+  const pathname = usePathname();
+  const sessionQuery = useQuery({
+    queryKey: ["auth-session"],
+    queryFn: () => getSession(),
+    retry: false,
+  });
 
   async function handleAdd() {
+    if (sessionQuery.isPending) return;
+    if (!sessionQuery.data?.user) {
+      const callbackUrl = `${pathname || "/"}${window.location.search}`;
+      router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+      return;
+    }
+
     try {
       await mutation.mutateAsync(productId);
       toast.success(t("addedToCart"));
@@ -35,7 +52,7 @@ export default function CartButtonCom({
     <button
       type="button"
       onClick={handleAdd}
-      disabled={disabled || mutation.isPending}
+      disabled={disabled || mutation.isPending || sessionQuery.isPending}
       aria-label={ariaLabel}
       className={className}
     >

@@ -8,7 +8,6 @@ export async function proxy(request: NextRequest) {
     secret: process.env.NEXTAUTH_SECRET,
   });
 
-  // Allow signed-in users to continue to the cart; send guests to login.
   if (userToken) {
     return NextResponse.next();
   }
